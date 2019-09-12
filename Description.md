@@ -1,9 +1,4 @@
----
-title: "Description of Sample Data"
-output: 
-  html_document:
-    keep_md: true
----
+
 
 # Description of Sample Data & Preliminary Analysis
 
