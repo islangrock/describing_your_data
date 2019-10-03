@@ -1,3 +1,9 @@
+---
+title: "Description of Sample Data"
+output: 
+  html_document:
+    keep_md: true
+---
 
 
 # Description of Sample Data & Preliminary Analysis
@@ -7,7 +13,7 @@ Load in the sample Data
 
 
 ```r
-sample_data<- read.csv("Data /sample_data.csv")
+sample_data<- read.csv("Data/sample_data.csv")
 boxplot(sample_data$linkcount)
 ```
 

@@ -5,13 +5,16 @@ output:
     keep_md: true
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 # Description of Sample Data & Preliminary Analysis
 
 
 Load in the sample Data 
 
 ```{r}
-sample_data<- read.csv("Data /sample_data.csv")
+sample_data<- read.csv("Data/sample_data.csv")
 boxplot(sample_data$linkcount)
 ```
 
