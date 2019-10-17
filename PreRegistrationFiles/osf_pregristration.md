@@ -6,14 +6,9 @@ output:
         pdf_document: default 
 ---
 
-```{r setup, include=FALSE}
-# By default, the code chunks are hidden for brevity. Set the echo argument to TRUE for blocks you want to share the code in the output for. 
-knitr::opts_chunk$set(echo = F)
-```
 
-```{r packages and data }
-# Load packages and data to be clear from the start
-```
+
+
 
 ## Study Information
 
