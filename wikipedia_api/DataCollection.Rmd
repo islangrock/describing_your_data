@@ -59,10 +59,6 @@ The data from the dashboards also includes:
 
 The wptools Python wrapper (https://github.com/siznax/wptools) for the Wikipedia API was used to access Wikipedia data. (@ Matt, I can't get the python wrapper to work in RStudio so please see the Wikipedia.py file. please let me know if I'm doing something incorrect!) 
 
-```{python}
-#import wptools 
-import csv 
-```
 
 ### Summaries of Data 
 
@@ -75,7 +71,7 @@ Scientists <- read.csv("~/Desktop/describing_your_data/wikipedia_api/500WomenSci
 __Number of New Articles vs. Articles Edited (False)__
 ```{r}
 new_articles<-summary(Scientists$new)
-new_articles
+new_articles <- 
 ```
 
 
