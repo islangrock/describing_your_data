@@ -1,0 +1,243 @@
+---
+title: "DataAnalysis"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r}
+library(tidyverse)
+library(readr)
+library(tidyr)
+```
+
+# Load and Clean Data 
+```{r}
+Artists<-read.csv("~/Desktop/describing_your_data/Data/Data_Sets/artandfemWiki.csv")
+Athletes<- read.csv("~/Desktop/describing_your_data/Data/Data_Sets/athletesWiki.csv")
+Politicians <- read.csv("~/Desktop/describing_your_data/Data/Data_Sets/politicsWiki.csv")
+Scientists <- read.csv("~/Desktop/describing_your_data/Data/Data_Sets/ScientistsWiki.csv")
+
+# Add a column to each for their group 
+Artists$type<-"Artists"
+Athletes$type<-"Athletes"
+Politicians$type <-"Politicians"
+Scientists$type<-"Scientists"
+
+# Add a column for Athletes and Politicans, so have consistent number of variables 
+Athletes$New <- "N/A"
+Politicians$New <- "N/A"
+
+# Combine into one data set 
+all_data<- rbind(Artists,Athletes,Politicians,Scientists)
+```
+
+# Descriptive Statistics 
+
+**Number of articles per group** 
+
+Table 1. Articles per Group, broken down by articles started by the groups and those edited by them. 
+
+```{r}
+all_data %>%
+  count(type)
+
+all_data %>%
+  group_by(type)%>%
+  count(New)
+```
+
+**Length Statistics**
+```{r}
+all_data%>%
+  group_by(type)%>%
+  summarise(average=mean(length), median=median(length), max=max(length), min=min(length))
+
+library(ggridges)
+
+figure1<-ggplot(all_data)+
+  geom_density_ridges(aes(x=log(length), y=type, fill=type), quantile_lines=TRUE, quantiles=2, show.legend=FALSE)+ 
+  ggtitle("Figure 1. Length of articles, by group")+ 
+  scale_fill_manual(values=c("#254181","#138d75","#a2d9ce","#72b2f5"))+
+  ylab(" ")+
+  xlab("log of character count")
+
+
+figure2<-ggplot()+
+  geom_boxplot(data=Artists, aes(x=type, y=log(length), fill=New))+
+  geom_boxplot(data=Scientists, aes(x=type, y=log(length), fill=New))+
+  ggtitle("Figure 2. Length of Newly Created and Edited Articles for Intervention Groups ")+
+  ylab("log of character count")+
+  xlab(" ")+
+  scale_fill_manual(name = " ", labels = c("Existing Articles", "Newly Created"), values=c("#673990","#e7dbf2"))+
+  theme_minimal()
+
+figure1
+figure2
+
+length_New<-all_data%>%
+  group_by(type, New)%>%
+  summarise(median(length), mean(length))
+
+length_New
+```
+
+**Wikilinks Statistics** 
+
+```{r}
+Artists_Net<-read.csv("~/Desktop/describing_your_data/Data/Wikilinks_Networks/ArtistsNet.csv")
+Athletes_Net<- read.csv("~/Desktop/describing_your_data/Data/Wikilinks_Networks/AthletesNet.csv")
+Politicians_Net<- read.csv("~/Desktop/describing_your_data/Data/Wikilinks_Networks/PoliticiansNet.csv")
+Scientists_Net<- read.csv("~/Desktop/describing_your_data/Data/Wikilinks_Networks/ScientistsNet.csv")
+
+Artists_Neta<-Artists_Net %>%
+  group_by(Source)%>%
+  summarise(num_of_links=n_distinct(Destination)) 
+
+Athletes_Neta<-Athletes_Net %>%
+  group_by(Source)%>%
+  summarise(num_of_links=n_distinct(Destination))
+
+Politicians_Neta<- Politicians_Net %>%
+  group_by(Source)%>%
+  summarise(num_of_links=n_distinct(Destination))
+  
+Scientists_Neta<- Scientists_Net %>%
+  group_by(Source)%>%
+  summarise(num_of_links=n_distinct(Destination))
+
+
+mean(Artists_Neta$num_of_links)
+mean(Athletes_Neta$num_of_links)
+mean(Politicians_Neta$num_of_links)
+mean(Scientists_Neta$num_of_links)
+
+
+median(Artists_Neta$num_of_links)
+median(Athletes_Neta$num_of_links)
+median(Politicians_Neta$num_of_links)
+median(Scientists_Neta$num_of_links)
+
+
+colnames(Artists_Neta)[colnames(Artists_Neta) == 'Source'] <- 'title'
+colnames(Athletes_Neta)[colnames(Athletes_Neta) == 'Source'] <- 'title'
+colnames(Politicians_Neta)[colnames(Politicians_Neta) == 'Source'] <- 'title'
+colnames(Scientists_Neta)[colnames(Scientists_Neta) == 'Source'] <- 'title'
+
+all_nets <- rbind(Artists_Neta, Athletes_Neta, Politicians_Neta, Scientists_Neta)
+all_data_net<- merge(all_data, all_nets, by="title")
+
+figure3<-ggplot(all_data_net, aes(x=length, y=num_of_links, color=type))+
+  geom_point()+
+  geom_smooth(aes(method="lm", se=FALSE))+
+  scale_color_manual(values=c("#254181","#138d75","#a2d9ce","#72b2f5"))+
+  ggtitle("Figure 3. Relationship of Wikilinks and length, per group ")+
+  xlab("Character count")+
+  ylab("Count of Wikilinks")+
+  theme_minimal()
+
+figure3
+```
+
+**Infobox Statistics** 
+```{r}
+infobox_report<-all_data%>%
+  group_by(type)%>%
+  summarise(total=length(infobox),no_info=length(infobox)-length(unique(infobox)))
+
+infobox_report
+
+infobox_report_long<-gather(infobox_report, Info, N, total:no_info, factor_key=TRUE)
+infobox_report_long
+
+
+figure4<-ggplot(data=infobox_report_long)+
+  geom_col(aes(x=type,y=N, fill=Info), position="dodge", show.legend=TRUE)+
+  scale_fill_manual(values=c("#673990", "#d2b4de"), labels=c("Total Articles", "No InfoBox"))+
+  ggtitle("Figure 4. Proportion of Articles Without Infoboxes within each group")+
+  ylab("Number of Articles")+
+  xlab(" ")+
+  theme_minimal()
+      
+figure4
+```
+
+
+**Average number of editors**
+```{r}
+editors<-all_data%>%
+  group_by(type) %>%
+  summarise(average=mean(editorcount), median=median(editorcount), max=max(editorcount), min=min(editorcount))
+
+editors
+```
+
+**Average number of pageviewss**
+```{r}
+pageviews<-all_data%>%
+  group_by(type) %>%
+  summarise(average=mean(aveviews), median=median(aveviews), max=max(aveviews), min=min(aveviews))
+```
+
+**Pageview and Editor Plots** 
+```{r}
+figure5<-ggplot(data=all_data) +
+  geom_boxplot(aes(x=type, y=log(aveviews), fill=type), show.legend=FALSE)+
+  scale_fill_manual(values=c("#254181","#138d75","#a2d9ce","#72b2f5"))+
+  theme_minimal()+
+  xlab("")+
+  ylab("Count of daily pageviews, logarithmic scale")+
+  ggtitle("Figure 5. Median Daily Page Views by Group")
+
+
+figure6<-ggplot(data=all_data)+
+  geom_boxplot(aes(x=type, y=log(editorcount), fill=type), show.legend=FALSE)+
+  theme_minimal()+
+  scale_fill_manual(values=c("#254181","#138d75","#a2d9ce","#72b2f5"))+
+  xlab("")+
+  ylab("Editor count, logarithmic scale")+
+  ggtitle("Figure 6. Median Editors by Group")
+
+figure5
+figure6
+```
+
+**Pageviews and Editor Count for New and Existing Articles**
+```{r}
+figure7<-ggplot()+
+  geom_boxplot(data=Artists, aes(x=type, y=log(aveviews), fill=New))+
+  geom_boxplot(data=Scientists, aes(x=type, y=log(aveviews), fill=New))+
+  ggtitle("Figure 7. Pageviews of Newly Created and Edited Articles \n for Intervention Groups ")+
+  ylab("log of pageviews")+
+  xlab(" ")+
+  scale_fill_manual(name = " ", labels = c("Existing Articles", "Newly Created"), values=c("#673990","#e7dbf2"))+
+  theme_minimal()
+
+
+figure8<- ggplot()+
+  geom_boxplot(data=Artists, aes(x=type, y=log(editorcount), fill=New))+
+  geom_boxplot(data=Scientists, aes(x=type, y=log(editorcount), fill=New))+
+  ggtitle("Figure 8. Editor Count of Newly Created and Edited Articles \n for Intervention Groups ")+
+  ylab("log of editor count")+
+  xlab(" ")+
+  scale_fill_manual(name = " ", labels = c("Existing Articles", "Newly Created"), values=c("#673990","#e7dbf2"))+
+  theme_minimal()
+
+figure7
+figure8
+
+figure9<-ggplot(all_data)+
+  geom_point(aes(x=editorcount, y=length, col=type))+
+  geom_smooth(aes(x=editorcount, y=length, col=type, method="lm", se=FALSE))+
+  scale_color_manual(values=c("#254181","#138d75","#a2d9ce","#72b2f5"))+
+  theme_minimal()+
+  ylab("length of article")+
+  xlab("editorcount")+
+  ggtitle("Figure 9. Relationship between number of editors and length of article")
+
+  
+figure9
+```
+
+
+
